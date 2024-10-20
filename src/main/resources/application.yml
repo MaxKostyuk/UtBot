@@ -1,3 +1,5 @@
 spring:
   application:
    name: "UtBotModule"
+
+#Next should be written login parameters bot:token and bot:name
