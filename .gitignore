@@ -1,0 +1,3 @@
+# Ignore application.yml in next commits
+/target
+*/application.yml
