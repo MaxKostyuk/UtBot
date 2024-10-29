@@ -1,5 +1,12 @@
 spring:
   application:
-   name: "UtBotModule"
-
+    name: "UtBotModule"
+#Next should be written login parameters for PostgreSQL DB
+  datasource:
+    url: ""
+    username: ""
+    password: ""
 #Next should be written login parameters bot:token and bot:name
+bot:
+  token: ""
+  name: ""
