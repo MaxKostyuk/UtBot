@@ -7,7 +7,7 @@ import lombok.NoArgsConstructor;
 @AllArgsConstructor
 @NoArgsConstructor
 @Getter
-public class ReadingsDto {
+public class TariffsDto {
     private int t1;
     private int t2;
     private int t3;
