@@ -1,5 +1,8 @@
 package com.kotan4ik.utbotmodule;
 
+import lombok.Getter;
+
+@Getter
 public enum ChatMode {
     /** Описывает возможные ветки диалога с ботом.
      *  При обновлении значений необходимо обновить тип MODE_TYPE, используемый в БД
@@ -12,7 +15,6 @@ public enum ChatMode {
 
     RECEIVE_NEW_READINGS("newReadings", "Передать новые показания в бот"),
     CALCULATE_SUM("calculateSum", "Расчет оплаты"),
-    SEND_READINGS("sendReadings", "Передать показания в УК"),
     SAVE_TARIFFS("saveTariffs", "Сохранить новые тарифы на услуги");
     private final String command;
     private final String buttonText;
@@ -20,14 +22,6 @@ public enum ChatMode {
     ChatMode(String command, String buttonText) {
         this.command = command;
         this.buttonText = buttonText;
-    }
-
-    public String getCommand() {
-        return command;
-    }
-
-    public String getButtonText() {
-        return buttonText;
     }
 
     public static ChatMode getByCommand(String command) {
