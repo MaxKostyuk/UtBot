@@ -1,5 +1,6 @@
-package com.kotan4ik.utbotmodule.bot;
+package com.kotan4ik.utbotmodule.mappers;
 
+import com.kotan4ik.utbotmodule.models.ReceivedMessage;
 import org.telegram.telegrambots.meta.api.objects.Update;
 
 public class ReceivedMessageMapper {

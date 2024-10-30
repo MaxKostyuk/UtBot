@@ -10,17 +10,17 @@ import org.telegram.telegrambots.updatesreceivers.DefaultBotSession;
 @Component
 public class BotInitializer {
 
-    private final UtilityBot utilityBot;
+    private final TelegramBot bot;
 
-    public BotInitializer(UtilityBot utilityBot) {
-        this.utilityBot = utilityBot;
+    public BotInitializer(TelegramBot bot) {
+        this.bot = bot;
     }
 
     @EventListener({ContextRefreshedEvent.class})
     public void init() {
         try {
             TelegramBotsApi telegramBotsApi = new TelegramBotsApi(DefaultBotSession.class);
-            telegramBotsApi.registerBot(utilityBot);
+            telegramBotsApi.registerBot(bot);
         } catch (TelegramApiException e) {
             e.printStackTrace();
         }
