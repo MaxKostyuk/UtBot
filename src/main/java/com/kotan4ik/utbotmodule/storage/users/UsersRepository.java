@@ -1,6 +1,6 @@
 package com.kotan4ik.utbotmodule.storage.users;
 
-import com.kotan4ik.utbotmodule.ChatMode;
+import com.kotan4ik.utbotmodule.Buttons;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
@@ -10,7 +10,7 @@ import java.util.Optional;
 
 public interface UsersRepository extends JpaRepository<User, Long> {
 
-    default void saveUserChatMode(Long userId, ChatMode mode) {
+    default void saveUserChatMode(Long userId, Buttons mode) {
         User user = findById(userId).orElse(new User(userId, mode)); // Найти пользователя или создать нового
         user.setMode(mode); // Установить новый режим
         save(user); // Сохранить изменения
@@ -22,6 +22,6 @@ public interface UsersRepository extends JpaRepository<User, Long> {
     void resetMode(Long userId);
 
     @Query("SELECT u.mode FROM User u WHERE u.id = ?1")
-    Optional<ChatMode> getUserChatMode(Long userId);
+    Optional<Buttons> getUserChatMode(Long userId);
 
 }

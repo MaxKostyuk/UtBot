@@ -1,6 +1,6 @@
 package com.kotan4ik.utbotmodule.storage.users;
 
-import com.kotan4ik.utbotmodule.ChatMode;
+import com.kotan4ik.utbotmodule.Buttons;
 import jakarta.persistence.*;
 import lombok.*;
 
@@ -17,5 +17,5 @@ public class User {
     private Long id;
     @Enumerated(EnumType.STRING)
     @Column(name = "chat_mode", columnDefinition = "mode_type")
-    private ChatMode mode;
+    private Buttons mode;
 }
