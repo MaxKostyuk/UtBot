@@ -8,9 +8,9 @@ public class ReceivedMessageMapper {
         long id;
 
         if (updateEvent.hasMessage()) {
-            id = updateEvent.getMessage().getFrom().getId();
+            id = updateEvent.getMessage().getChatId();
         }else if (updateEvent.hasCallbackQuery()) {
-            id = updateEvent.getCallbackQuery().getFrom().getId();
+            id = updateEvent.getCallbackQuery().getMessage().getChatId();
         } else {
             throw new IllegalArgumentException("Unsupported type of message");
         }
