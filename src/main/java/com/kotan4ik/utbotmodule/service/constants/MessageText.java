@@ -10,4 +10,5 @@ public class MessageText {
     public static final String CALCULATION_DONE = "Итого к оплате: ";
     public static final String TARIFFS_NOT_FOUND = "Нет сохраненных тарифов. Добавь их и попробуй еще раз";
     public static final String READINGS_NOT_FOUND = "Должны быть сохранены хотя бы 2 набора показаний. Добавь их и попробуй еще раз";
+    public static final String DATA_PARSE_ERROR = "Не получилось обработать полученные данные. Убедись, что они в правильном формате и попробуй еще раз";
 }

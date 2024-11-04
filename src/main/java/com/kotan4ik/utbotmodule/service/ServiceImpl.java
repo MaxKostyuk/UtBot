@@ -13,7 +13,12 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
-import java.util.*;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import static com.kotan4ik.utbotmodule.Buttons.*;
 import static com.kotan4ik.utbotmodule.service.constants.MessageText.*;
@@ -34,27 +39,21 @@ public class ServiceImpl implements Service {
 
     @Override
     public void sendWelcomeMessage(long chatId) {
-        Map<String, String> welcomeButtons = new HashMap<>();
-        for (Buttons button : Buttons.values()) {
-            if (button.isMenuButton())
-                welcomeButtons.put(button.getButtonText(), button.getCommand());
-        }
+        Map<String, String> welcomeButtons = Buttons.stream()
+                .filter(Buttons::isMenuButton)
+                .collect(Collectors.toMap(Buttons::getButtonText, Buttons::getCommand));
         bot.sendTextMessageWithButtons(chatId, GENERAL_WELCOME, welcomeButtons);
     }
 
     @Override
     public void welcomeNewReadings(long chatId) {
-        Map<String, String> cancelButton = new HashMap<>();
-        cancelButton.put(Buttons.CANCEL.getButtonText(), CANCEL.getCommand());
-        bot.sendTextMessageWithButtons(chatId, SAVE_READINGS_WELCOME, cancelButton);
+        sendMessageWithCancelButton(chatId, SAVE_READINGS_WELCOME);
         usersRepository.saveUserChatMode(chatId, RECEIVE_NEW_READINGS);
     }
 
     @Override
     public void welcomeSaveTariffs(long chatId) {
-        Map<String, String> cancelButton = new HashMap<>();
-        cancelButton.put(Buttons.CANCEL.getButtonText(), CANCEL.getCommand());
-        bot.sendTextMessageWithButtons(chatId, SAVE_TARIFFS_WELCOME, cancelButton);
+        sendMessageWithCancelButton(chatId, SAVE_TARIFFS_WELCOME);
         usersRepository.saveUserChatMode(chatId, SAVE_TARIFFS);
     }
 
@@ -78,34 +77,27 @@ public class ServiceImpl implements Service {
     }
 
     @Override
-    public void processNewReadings(long chatId, String readings) {
-        List<String> readingsList = List.of(readings.split(";"));
-        List<Integer> intReadings = new ArrayList<>();
-        for (String reading : readingsList) {
-            intReadings.add(Integer.parseInt(reading));
+    public void processNewReadings(long chatId, String stringReadings) {
+        try {
+            List<Integer> intReadings = parseStringReadingData(stringReadings, ";");
+            Readings readings = integersToReadings(chatId, intReadings);
+            readingsRepository.save(readings);
+            finalizeProcess(chatId, READINGS_SAVED);
+        } catch (Exception e) {
+            sendMessageWithCancelButton(chatId, DATA_PARSE_ERROR);
         }
-        Readings reading = Readings.builder().userId(chatId).t1(intReadings.get(0)).t2(intReadings.get(1)).t3(intReadings.get(2)).hot(intReadings.get(3)).cold(intReadings.get(4)).build();
-        readingsRepository.save(reading);
-        usersRepository.resetMode(chatId);
-        bot.sendTextMessage(chatId, READINGS_SAVED);
-        sendWelcomeMessage(chatId);
-
     }
 
     @Override
-    public void processNewTariffs(long chatId, String readings) {
-        List<String> tariffsList = List.of(readings.split(";"));
-        List<Integer> intTariffs = new ArrayList<>();
-        for (String tariff : tariffsList) {
-            Double doubleTariff = Double.parseDouble(tariff.replace(",", ".")) * 100;
-            intTariffs.add((int) Math.round(doubleTariff));
+    public void processNewTariffs(long chatId, String stringTariffs) {
+        try {
+            List<Integer> intTariffs = parseStringTariffsData(stringTariffs, ";");
+            Tariffs tariff = integersToTariffs(chatId, intTariffs);
+            tariffsRepository.save(tariff);
+            finalizeProcess(chatId, TARIFFS_SAVED);
+        }catch (Exception e) {
+            sendMessageWithCancelButton(chatId, DATA_PARSE_ERROR);
         }
-        Tariffs tariff = Tariffs.builder().userId(chatId).t1(intTariffs.get(0)).t2(intTariffs.get(1)).t3(intTariffs.get(2)).hot(intTariffs.get(3)).cold(intTariffs.get(4)).build();
-        tariffsRepository.save(tariff);
-        usersRepository.resetMode(chatId);
-        bot.sendTextMessage(chatId, TARIFFS_SAVED);
-        sendWelcomeMessage(chatId);
-
     }
 
     @Override
@@ -121,15 +113,65 @@ public class ServiceImpl implements Service {
 
     private double calculateSum(ReadingsDto lastReadings, ReadingsDto previousReadings, TariffsDto tariffs) {
         int sum = 0;
-        int[] lastReadingsArray = {lastReadings.getT1(), lastReadings.getT2(), lastReadings.getT3(), lastReadings.getCold(), lastReadings.getHot()};
-        int[] previousReadingsArray = {previousReadings.getT1(), previousReadings.getT2(), previousReadings.getT3(), previousReadings.getCold(), previousReadings.getHot()};
-        int[] tariffsArray = {tariffs.getT1(), tariffs.getT2(), tariffs.getT3(), tariffs.getCold(), tariffs.getHot()};
 
-        for (int i = 0; i < lastReadingsArray.length; i++) {
-            sum += (lastReadingsArray[i] - previousReadingsArray[i]) * tariffsArray[i];
-        }
+        sum += (lastReadings.getT1() - previousReadings.getT1()) * tariffs.getT1();
+        sum += (lastReadings.getT2() - previousReadings.getT2()) * tariffs.getT2();
+        sum += (lastReadings.getT3() - previousReadings.getT3()) * tariffs.getT3();
+        sum += (lastReadings.getCold() - previousReadings.getCold()) * tariffs.getCold();
+        sum += (lastReadings.getHot() - previousReadings.getHot()) * tariffs.getHot();
 
-        double total = sum / 100;
-        return total;
+        return sum / 100.0;
+    }
+
+    private List<Integer> parseStringReadingData(String data, String delimiter) {
+        return Stream.of(data.split(delimiter))
+                .map(String::trim)
+                .map(Integer::parseInt)
+                .collect(Collectors.toList());
+
+    }
+
+    private Readings integersToReadings(long userId, List<Integer> intReadings) {
+        return Readings.builder()
+                .userId(userId)
+                .t1(intReadings.get(0))
+                .t2(intReadings.get(1))
+                .t3(intReadings.get(2))
+                .hot(intReadings.get(3))
+                .cold(intReadings.get(4))
+                .build();
+    }
+
+    private List<Integer> parseStringTariffsData(String stringTariffs, String delimiter) {
+        return Stream.of(stringTariffs.split(delimiter))
+                .map(tariffString -> {
+                    String tariff = tariffString.replace(",", ".").trim();
+                    double tariffDouble = Double.parseDouble(tariff);
+                    return (int) Math.round(tariffDouble * 100);
+                })
+                .collect(Collectors.toList());
+    }
+
+    private Tariffs integersToTariffs(long userId, List<Integer> intTariffs) {
+        return Tariffs.builder()
+                .userId(userId)
+                .t1(intTariffs.get(0))
+                .t2(intTariffs.get(1))
+                .t3(intTariffs.get(2))
+                .hot(intTariffs.get(3))
+                .cold(intTariffs.get(4))
+                .build();
+    }
+
+    private void sendMessageWithCancelButton(long chatId, String message) {
+        Map<String, String> cancelButton = new HashMap<>();
+        cancelButton.put(Buttons.CANCEL.getButtonText(), CANCEL.getCommand());
+        bot.sendTextMessageWithButtons(chatId, message, cancelButton);
+    }
+
+    private void finalizeProcess(long chatId, String message) {
+        usersRepository.resetMode(chatId);
+        bot.sendTextMessage(chatId, message);
+        sendWelcomeMessage(chatId);
     }
 }

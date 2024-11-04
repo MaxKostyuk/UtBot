@@ -3,6 +3,8 @@ package com.kotan4ik.utbotmodule;
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 
+import java.util.stream.Stream;
+
 @Getter
 @RequiredArgsConstructor
 public enum Buttons {
@@ -29,5 +31,9 @@ public enum Buttons {
                 return mode;
         }
         throw new IllegalArgumentException("No mode found for this command");
+    }
+
+    public static Stream<Buttons> stream() {
+        return Stream.of(Buttons.values());
     }
 }
