@@ -1,0 +1,29 @@
+services:
+  bot-db:
+    image: postgres:16-alpine
+    container_name: utbot_db_container
+    volumes:
+      - utbot_db_volume:/var/lib/postgresql/data
+    ports:
+      - "9090:5432"
+    environment:
+      POSTGRES_DB: utilities
+      POSTGRES_USER: bot
+      POSTGRES_PASSWORD: password
+  bot:
+    build: .
+    image: bot-image
+    container_name: utbot-container
+    depends_on:
+      - bot-db
+    environment:
+      - DB_HOST=bot-db
+      - DB_PORT=5432
+      - DB_NAME=utilities
+      - DB_USER=bot
+      - DB_PASSWORD=password
+      - BOT_NAME=
+      - BOT_TOKEN=
+
+volumes:
+  utbot_db_volume:
