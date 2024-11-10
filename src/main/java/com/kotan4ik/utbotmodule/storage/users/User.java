@@ -16,6 +16,6 @@ public class User {
     @Column(name = "tele_id")
     private Long id;
     @Enumerated(EnumType.STRING)
-    @Column(name = "chat_mode", columnDefinition = "mode_type")
+    @Column(name = "chat_mode")
     private Buttons mode;
 }
